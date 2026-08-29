@@ -214,7 +214,7 @@
   .category-title .cat-del:hover { color: var(--danger); }
 
   .item {
-    display: flex; flex-direction: column; gap: 10px;
+    display: flex; flex-direction: row; align-items: center; gap: 14px;
     background: linear-gradient(180deg, rgba(255,255,255,.52), rgba(255,255,255,.24));
     backdrop-filter: blur(26px) saturate(170%);
     -webkit-backdrop-filter: blur(26px) saturate(170%);
@@ -225,21 +225,29 @@
     transition: transform .08s ease, box-shadow .15s ease;
     cursor: pointer; user-select: none;
   }
-  .item-row { display: flex; align-items: center; gap: 13px; }
-  .item-img-wrap { position: relative; width: 100%; }
+  .item-row { display: flex; align-items: center; gap: 13px; flex: 1; min-width: 0; }
+  .item-img-wrap {
+    position: relative; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
   .item-img {
-    width: 100%;
-    border-radius: 12px;
-    display: block;
+    max-height: 108px; max-width: 132px; width: auto; height: auto;
+    border-radius: 14px;
+    border: 1px solid var(--glass-border-soft);
+    box-shadow: 0 6px 16px rgba(70,80,160,.22);
+    cursor: zoom-in;
+    object-fit: cover;
+    background: rgba(255,255,255,.2);
   }
   .img-del {
-    position: absolute; top: 8px; right: 8px;
-    width: 28px; height: 28px;
-    border-radius: 50%; border: none;
-    background: rgba(0,0,0,.45); color: #fff;
-    font-size: 13px; cursor: pointer;
-    backdrop-filter: blur(8px); line-height: 1;
+    position: absolute; top: -7px; right: -7px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(20,22,34,.85); color: #fff; border: 1px solid rgba(255,255,255,.3);
+    font-size: 11px; cursor: pointer; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
   }
+  .img-del:hover { background: var(--danger); }
   .img-btn {
     border: 1px solid var(--glass-border-soft); background: rgba(255,255,255,.4);
     backdrop-filter: blur(14px);
@@ -448,6 +456,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// ================= 预设清单 =================
 const DEFAULT_DATA = [
   { category: "📄 证件资料", items: [
     "身份证", "学生证", "校园卡/一卡通", "银行卡", "证件照（一寸/两寸）",
@@ -483,9 +492,11 @@ const DEFAULT_DATA = [
 
 const STORAGE_KEY = "school-pack-checklist-v1";
 
+// ================= 状态 =================
 let data = loadData();
 let filterOnlyMissing = false;
 
+// ================= 工具 =================
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -496,6 +507,7 @@ function normalizeUrl(u) {
   return u;
 }
 
+// ================= 存储 =================
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -525,6 +537,7 @@ function saveData(d) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 }
 
+// ================= 分类下拉 =================
 function populateSelect() {
   const sel = document.getElementById("addCategory");
   const prev = sel.value;
@@ -538,6 +551,7 @@ function populateSelect() {
   if (prev && data.some(g => g.category === prev)) sel.value = prev;
 }
 
+// ================= 渲染 =================
 function render() {
   const listEl = document.getElementById("list");
   const kw = document.getElementById("searchInput").value.trim().toLowerCase();
@@ -610,8 +624,12 @@ function render() {
   saveData();
 }
 
-function countAll() { return data.reduce((s, g) => s + g.items.length, 0); }
-function countDone() { return data.reduce((s, g) => s + g.items.filter(i => i.checked).length, 0); }
+function countAll() {
+  return data.reduce((s, g) => s + g.items.length, 0);
+}
+function countDone() {
+  return data.reduce((s, g) => s + g.items.filter(i => i.checked).length, 0);
+}
 
 function findItem(key) {
   const [cat, name] = key.split("||").map(decodeURIComponent);
@@ -620,6 +638,7 @@ function findItem(key) {
   return group.items.find(i => i.name === name) || null;
 }
 
+// ================= 事件 =================
 document.getElementById("list").addEventListener("click", e => {
   const linkBtn = e.target.closest(".link-btn");
   if (linkBtn) {
@@ -644,6 +663,12 @@ document.getElementById("list").addEventListener("click", e => {
     e.stopPropagation();
     currentImageKey = imgBtn.dataset.img;
     document.getElementById("itemImageFile").click();
+    return;
+  }
+  const imgEl = e.target.closest(".item-img");
+  if (imgEl) {
+    e.stopPropagation();
+    if (imgEl.src) window.open(imgEl.src, "_blank", "noopener");
     return;
   }
   const catDel = e.target.closest(".cat-del");
@@ -699,6 +724,7 @@ function editItem(key) {
   showToast("已更新");
 }
 
+// ================= 物品图片 =================
 let currentImageKey = null;
 function compressItemImage(file) {
   return new Promise((resolve, reject) => {
@@ -807,6 +833,7 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   showToast("已重置勾选");
 });
 
+// ================= 自定义背景 =================
 const BG_KEY = "school-pack-bg-v1";
 const bgEl = document.querySelector(".bg");
 
