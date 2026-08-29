@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>开学物品检查清单</title>
+<style>
+  :root {
+    --primary: #4f6ef7;
+    --primary-dark: #3b55d9;
+    --bg: #f2f4fb;
+    --card: #ffffff;
+    --text: #1f2430;
+    --text-sub: #6b7280;
+    --danger: #f04b4b;
+    --success: #22b573;
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding-bottom: 150px;
+  }
+
+  /* ===== 顶部 ===== */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: linear-gradient(135deg, #4f6ef7, #7b5cf0);
+    color: #fff;
+    padding: 18px 18px 16px;
+    box-shadow: 0 4px 16px rgba(79, 110, 247, .25);
+  }
+  header h1 { font-size: 20px; font-weight: 700; letter-spacing: .5px; }
+  header .sub { font-size: 13px; opacity: .85; margin-top: 3px; }
+  .progress-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  .progress-track {
+    flex: 1; height: 10px; background: rgba(255,255,255,.28);
+    border-radius: 99px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; width: 0%;
+    background: #fff;
+    border-radius: 99px;
+    transition: width .35s ease;
+  }
+  .progress-num { font-size: 14px; font-weight: 600; white-space: nowrap; }
+
+  /* ===== 工具条 ===== */
+  .toolbar {
+    position: sticky;
+    top: 104px;
+    z-index: 9;
+    background: var(--bg);
+    padding: 12px 14px 8px;
+    display: flex;
+    gap: 10px;
+  }
+  .toolbar .search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border-radius: 12px;
+    padding: 0 12px;
+    border: 1px solid #e3e7f2;
+  }
+  .toolbar .search input {
+    flex: 1; border: none; outline: none;
+    font-size: 15px; padding: 11px 8px; background: transparent;
+    color: var(--text);
+  }
+  .toolbar .search .icon { font-size: 16px; color: #9aa2b5; }
+  .toolbar button {
+    border: none; border-radius: 12px; font-size: 14px; font-weight: 600;
+    padding: 0 14px; cursor: pointer; background: #fff; color: var(--text);
+    border: 1px solid #e3e7f2;
+  }
+  .toolbar button.filter-active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* ===== 清单 ===== */
+  main { padding: 6px 14px 20px; }
+  .category { margin-top: 16px; }
+  .category-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 700; margin-bottom: 8px; padding: 0 2px;
+  }
+  .category-title .badge {
+    font-size: 11px; font-weight: 600; color: var(--text-sub);
+    background: #e6eaf6; border-radius: 99px; padding: 2px 8px;
+  }
+  .category-title .badge.all-done { background: #d9f5e8; color: var(--success); }
+  .category-title .badge.has-missing { background: #fde3e3; color: var(--danger); }
+  .category-title .cat-del {
+    margin-left: auto; border: none; background: transparent;
+    color: #c3cadb; font-size: 13px; cursor: pointer; padding: 2px 6px;
+  }
+  .category-title .cat-del:hover { color: var(--danger); }
+
+  .item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border-radius: var(--radius);
+    padding: 13px 14px; margin-bottom: 8px;
+    border: 1px solid #edf0f7;
+    transition: transform .05s;
+    cursor: pointer;
+    user-select: none;
+  }
+  .item:active { transform: scale(.985); }
+  .item .box {
+    width: 24px; height: 24px; flex-shrink: 0;
+    border: 2px solid #c6cde0; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s ease;
+  }
+  .item.checked .box {
+    background: var(--success); border-color: var(--success);
+  }
+  .item.checked .box svg { stroke-dasharray: 24; stroke-dashoffset: 0; }
+  .item .name { font-size: 15px; flex: 1; word-break: break-all; }
+  .item.checked .name { color: var(--text-sub); text-decoration: line-through; }
+  .item .box svg {
+    width: 14px; height: 14px; stroke: #fff; stroke-width: 3;
+    fill: none; stroke-dasharray: 24; stroke-dashoffset: 24;
+    transition: stroke-dashoffset .2s ease;
+  }
+  .item .link-btn {
+    border: none; background: #eef2ff; border-radius: 8px;
+    font-size: 15px; padding: 4px 7px; cursor: pointer; flex-shrink: 0;
+    line-height: 1;
+  }
+  .item .link-btn:active { background: #dbe3ff; }
+  .item .edit {
+    border: none; background: transparent; font-size: 14px; color: #b7c0d4;
+    padding: 4px 4px; cursor: pointer; flex-shrink: 0;
+  }
+  .item .edit:hover { color: var(--primary); }
+  .item .del {
+    border: none; background: transparent; font-size: 15px; color: #c3cadb;
+    padding: 4px 6px; cursor: pointer; flex-shrink: 0;
+  }
+  .item .del:hover { color: var(--danger); }
+
+  /* ===== 空状态 ===== */
+  .empty {
+    text-align: center; color: var(--text-sub); font-size: 14px;
+    padding: 48px 20px;
+  }
+  .empty .big { font-size: 42px; margin-bottom: 10px; }
+  .empty .highlight { color: var(--success); font-weight: 700; }
+
+  /* ===== 添加 / 底部 ===== */
+  .addbar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #fff; border-top: 1px solid #e6eaf6;
+    padding: 12px 14px calc(12px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 16px rgba(31,36,48,.06);
+  }
+  .addbar-row1 { display: flex; gap: 8px; align-items: center; }
+  .addbar-row2 {
+    display: none; gap: 8px; align-items: center;
+    margin-top: 8px; background: #f6f8fd; border: 1px solid #e3e7f2;
+    border-radius: 12px; padding: 8px 10px;
+  }
+  .addbar-row2 .hint { font-size: 11px; color: var(--text-sub); flex-shrink: 0; }
+  .add-select {
+    border: 1px solid #e3e7f2; border-radius: 12px; background: #f6f8fd;
+    padding: 0 8px; font-size: 14px; color: var(--text); height: 46px; outline: none;
+    max-width: 118px; flex-shrink: 0;
+  }
+  .newcat-btn {
+    border: 1px dashed #b9c4e6; border-radius: 12px; background: #f6f8fd;
+    color: var(--primary); font-size: 13px; font-weight: 600;
+    height: 46px; padding: 0 10px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  }
+  .newcat-btn:active { background: #eef2ff; }
+  .add-input {
+    flex: 1; height: 46px; border: 1px solid #e3e7f2; border-radius: 12px;
+    padding: 0 14px; font-size: 15px; outline: none; color: var(--text); min-width: 0;
+  }
+  .add-input:focus { border-color: var(--primary); }
+  .link-toggle {
+    width: 46px; height: 46px; flex-shrink: 0;
+    border: 1px solid #e3e7f2; border-radius: 12px; background: #f6f8fd;
+    font-size: 18px; cursor: pointer;
+  }
+  .link-toggle.active { background: var(--primary); border-color: var(--primary); }
+  .link-input {
+    flex: 1; height: 40px; border: 1px solid #dfe4f3; border-radius: 10px;
+    padding: 0 12px; font-size: 14px; outline: none; color: var(--text); min-width: 0;
+  }
+  .link-input:focus { border-color: var(--primary); }
+  .add-btn {
+    height: 46px; padding: 0 20px; border: none; border-radius: 12px;
+    background: var(--primary); color: #fff; font-size: 15px; font-weight: 700;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .add-btn:active { background: var(--primary-dark); }
+
+  .reset-btn {
+    display: block; margin: 22px auto 0; border: 1px solid #e3e7f2;
+    background: #fff; color: var(--text-sub); font-size: 13px;
+    padding: 9px 22px; border-radius: 99px; cursor: pointer;
+  }
+  .reset-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+  /* ===== toast ===== */
+  .toast {
+    position: fixed; left: 50%; bottom: 132px; transform: translateX(-50%) translateY(10px);
+    background: rgba(31,36,48,.92); color: #fff; font-size: 13px;
+    padding: 10px 18px; border-radius: 99px; opacity: 0;
+    transition: all .25s ease; pointer-events: none; z-index: 20;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎒 开学物品检查清单</h1>
+  <div class="sub" id="dateLine"></div>
+  <div class="progress-row">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-num" id="progressNum">0/0</div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="search">
+    <span class="icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="搜索物品…" />
+  </div>
+  <button id="filterBtn">只显示未带</button>
+</div>
+
+<main id="list"></main>
+
+<button class="reset-btn" id="resetBtn">重置所有勾选</button>
+
+<div class="addbar">
+  <div class="addbar-row1">
+    <select class="add-select" id="addCategory"></select>
+    <button class="newcat-btn" id="newCatBtn" title="新建自己的分类">＋新分类</button>
+    <input class="add-input" id="addInput" placeholder="添加物品，如：耳机" maxlength="30" />
+    <button class="link-toggle" id="linkToggle" title="给物品添加链接">🔗</button>
+    <button class="add-btn" id="addBtn">＋</button>
+  </div>
+  <div class="addbar-row2" id="linkRow">
+    <input class="link-input" id="addLink" placeholder="粘贴物品链接（如淘宝/参考网址）" />
+    <span class="hint">添加后点物品上的 🔗 可直接打开</span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ================= 预设清单 =================
+const DEFAULT_DATA = [
+  { category: "📄 证件资料", items: [
+    "身份证", "学生证", "校园卡/一卡通", "银行卡", "证件照（一寸/两寸）",
+    "录取通知书/报到材料", "团员证/党团材料", "档案材料", "体检报告"
+  ]},
+  { category: "🔌 电子产品", items: [
+    "手机", "手机充电器", "数据线", "充电宝", "耳机",
+    "笔记本电脑", "电脑充电器", "平板/电子书", "U盘/硬盘", "鼠标"
+  ]},
+  { category: "👕 衣物", items: [
+    "换洗外套", "日常衣物", "睡衣", "内衣裤", "袜子",
+    "运动鞋", "拖鞋", "换季薄外套"
+  ]},
+  { category: "🧴 洗漱用品", items: [
+    "牙刷", "牙膏", "洗面奶", "洗发水", "沐浴露",
+    "毛巾/浴巾", "梳子", "剃须刀/化妆包"
+  ]},
+  { category: "🛏️ 宿舍用品", items: [
+    "床单被套", "枕头", "被子", "枕头套",
+    "衣架", "台灯", "插线板", "垃圾桶/垃圾袋", "小锁"
+  ]},
+  { category: "✏️ 学习用品", items: [
+    "笔记本", "签字笔", "课本/教材", "文具袋", "计算器", "便利贴"
+  ]},
+  { category: "💊 药品", items: [
+    "感冒药", "肠胃药", "创可贴", "退烧药", "常用药（个人）"
+  ]},
+  { category: "🧺 日常用品", items: [
+    "水杯", "雨伞", "纸巾/湿巾", "指甲剪", "钥匙", "口罩",
+    "收纳盒/收纳袋", "饭盒/餐具"
+  ]}
+];
+
+const STORAGE_KEY = "school-pack-checklist-v1";
+
+// ================= 状态 =================
+let data = loadData();
+let filterOnlyMissing = false;
+
+// ================= 工具 =================
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function normalizeUrl(u) {
+  u = (u || "").trim();
+  if (!u) return null;
+  if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+  return u;
+}
+
+// ================= 存储 =================
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed)) {
+        // 迁移兼容旧版本数据
+        parsed.forEach(g => {
+          if (g.custom === undefined) g.custom = false;
+          g.items.forEach(i => { if (i.link === undefined) i.link = null; });
+        });
+        return parsed;
+      }
+    }
+  } catch (e) {}
+  // 首次使用：生成默认数据
+  const d = DEFAULT_DATA.map(g => ({
+    category: g.category, custom: false,
+    items: g.items.map(n => ({ name: n, checked: false, link: null }))
+  }));
+  saveData(d);
+  return d;
+}
+function saveData(d) {
+  const payload = d || data;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+
+// ================= 分类下拉 =================
+function populateSelect() {
+  const sel = document.getElementById("addCategory");
+  const prev = sel.value;
+  sel.innerHTML = "";
+  data.forEach(g => {
+    const o = document.createElement("option");
+    o.value = g.category;
+    o.textContent = g.category;
+    sel.appendChild(o);
+  });
+  if (prev && data.some(g => g.category === prev)) sel.value = prev;
+}
+
+// ================= 渲染 =================
+function render() {
+  const listEl = document.getElementById("list");
+  const kw = document.getElementById("searchInput").value.trim().toLowerCase();
+  const total = countAll();
+  const done = countDone();
+
+  // 进度
+  document.getElementById("progressFill").style.width = total === 0 ? "0%" : (done / total * 100) + "%";
+  document.getElementById("progressNum").textContent = done + "/" + total + (total - done > 0 ? " · 还有 " + (total - done) + " 件未带" : " · 全部带齐 ✅");
+
+  populateSelect();
+
+  let html = "";
+  data.forEach(group => {
+    const filtered = group.items.filter(it => {
+      if (filterOnlyMissing && it.checked) return false;
+      if (kw && !it.name.toLowerCase().includes(kw)) return false;
+      return true;
+    });
+    if (filtered.length === 0) return;
+
+    const missing = filtered.filter(it => !it.checked).length;
+    const allDone = missing === 0;
+    html += '<div class="category">';
+    html += '<div class="category-title"><span>' + esc(group.category) + '</span>';
+    html += '<span class="badge ' + (allDone ? "all-done" : "has-missing") + '">' +
+            (allDone ? "✓ 已带齐" : "未带 " + missing + " 件") + '</span>';
+    if (group.custom) {
+      html += '<button class="cat-del" data-cat="' + encodeURIComponent(group.category) + '" title="删除该分类">✕</button>';
+    }
+    html += '</div>';
+
+    filtered.forEach(it => {
+      const key = encodeURIComponent(group.category) + "||" + encodeURIComponent(it.name);
+      html += '<div class="item ' + (it.checked ? "checked" : "") + '" data-key="' + key + '">';
+      html += '<div class="box"><svg viewBox="0 0 24 24"><polyline points="4,12 9,17 20,6"/></svg></div>';
+      html += '<div class="name"></div>';
+      if (it.link) {
+        html += '<button class="link-btn" data-link="' + encodeURIComponent(it.link) + '" title="打开链接">🔗</button>';
+      }
+      html += '<button class="edit" data-edit="' + key + '" title="编辑名称/链接">✎</button>';
+      html += '<button class="del" data-del="' + key + '">✕</button>';
+      html += '</div>';
+    });
+    html += '</div>';
+  });
+
+  if (html === "") {
+    const allChecked = total > 0 && done === total;
+    html = '<div class="empty"><div class="big">' + (allChecked ? "🎉" : "🔍") + '</div>' +
+           (allChecked ? '所有物品都带齐啦！<br><span class="highlight">可以安心出发~</span>'
+                       : '没有符合条件的物品，试试换个关键词或取消筛选。') + '</div>';
+  }
+  listEl.innerHTML = html;
+
+  // 填名字（避免 XSS：用 textContent 而非直接拼 html）
+  listEl.querySelectorAll(".item .name").forEach(el => {
+    const key = decodeURIComponent(el.parentElement.dataset.key);
+    const name = key.split("||").pop();
+    el.textContent = name;
+  });
+
+  saveData();
+}
+
+function countAll() {
+  return data.reduce((s, g) => s + g.items.length, 0);
+}
+function countDone() {
+  return data.reduce((s, g) => s + g.items.filter(i => i.checked).length, 0);
+}
+
+function findItem(key) {
+  const [cat, name] = key.split("||").map(decodeURIComponent);
+  const group = data.find(g => g.category === cat);
+  if (!group) return null;
+  return group.items.find(i => i.name === name) || null;
+}
+
+// ================= 事件 =================
+document.getElementById("list").addEventListener("click", e => {
+  // 打开物品链接
+  const linkBtn = e.target.closest(".link-btn");
+  if (linkBtn) {
+    e.stopPropagation();
+    const url = decodeURIComponent(linkBtn.dataset.link);
+    window.open(url, "_blank", "noopener");
+    return;
+  }
+  // 删除整个自定义分类
+  const catDel = e.target.closest(".cat-del");
+  if (catDel) {
+    e.stopPropagation();
+    const cat = decodeURIComponent(catDel.dataset.cat);
+    if (!confirm("删除分类「" + cat + "」及其全部物品？")) return;
+    data = data.filter(g => g.category !== cat);
+    populateSelect();
+    render();
+    showToast("已删除分类");
+    return;
+  }
+  // 编辑物品（名称/链接）
+  const editBtn = e.target.closest(".edit");
+  if (editBtn) {
+    e.stopPropagation();
+    editItem(editBtn.dataset.edit);
+    return;
+  }
+  // 删除物品
+  const delBtn = e.target.closest(".del");
+  if (delBtn) {
+    e.stopPropagation();
+    const item = findItem(delBtn.dataset.del);
+    if (item) {
+      const group = data.find(g => g.items.includes(item));
+      group.items.splice(group.items.indexOf(item), 1);
+      render();
+      showToast("已删除");
+    }
+    return;
+  }
+  // 勾选
+  const itemEl = e.target.closest(".item");
+  if (itemEl) {
+    const item = findItem(itemEl.dataset.key);
+    if (item) {
+      item.checked = !item.checked;
+      render();
+    }
+  }
+});
+
+function editItem(key) {
+  const item = findItem(key);
+  if (!item) return;
+  const newName = prompt("修改物品名称：", item.name);
+  if (newName === null) return;
+  const name = newName.trim();
+  const newLink = prompt("物品链接（留空表示无链接，点 🔗 可打开）：", item.link || "");
+  if (newLink === null) return;
+  if (name) item.name = name;
+  item.link = normalizeUrl(newLink);
+  render();
+  showToast("已更新");
+}
+
+document.getElementById("filterBtn").addEventListener("click", () => {
+  filterOnlyMissing = !filterOnlyMissing;
+  document.getElementById("filterBtn").classList.toggle("filter-active", filterOnlyMissing);
+  document.getElementById("filterBtn").textContent = filterOnlyMissing ? "显示全部" : "只显示未带";
+  render();
+});
+
+document.getElementById("searchInput").addEventListener("input", render);
+
+document.getElementById("linkToggle").addEventListener("click", () => {
+  const row = document.getElementById("linkRow");
+  const on = row.style.display !== "flex";
+  row.style.display = on ? "flex" : "none";
+  document.getElementById("linkToggle").classList.toggle("active", on);
+  if (on) document.getElementById("addLink").focus();
+});
+
+document.getElementById("newCatBtn").addEventListener("click", () => {
+  const name = prompt("输入新分类名称（如：零食、杂物、礼物）：");
+  if (!name || !name.trim()) return;
+  const n = name.trim();
+  if (data.some(g => g.category === n)) { showToast("该分类已存在"); return; }
+  data.push({ category: n, custom: true, items: [] });
+  populateSelect();
+  document.getElementById("addCategory").value = n;
+  render();
+  showToast("已新建分类「" + n + "」");
+});
+
+document.getElementById("addBtn").addEventListener("click", addItem);
+document.getElementById("addInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") addItem();
+});
+document.getElementById("addLink").addEventListener("keydown", e => {
+  if (e.key === "Enter") addItem();
+});
+
+function addItem() {
+  const input = document.getElementById("addInput");
+  const name = input.value.trim();
+  if (!name) { showToast("请输入物品名称"); return; }
+  const cat = document.getElementById("addCategory").value;
+  const link = normalizeUrl(document.getElementById("addLink").value);
+
+  let group = data.find(g => g.category === cat);
+  if (!group) {
+    group = { category: cat, custom: false, items: [] };
+    data.push(group);
+  }
+  if (group.items.some(i => i.name === name)) {
+    showToast("该物品已存在");
+    return;
+  }
+  group.items.push({ name, checked: false, link });
+  input.value = "";
+  document.getElementById("addLink").value = "";
+  document.getElementById("linkRow").style.display = "none";
+  document.getElementById("linkToggle").classList.remove("active");
+  render();
+  showToast(link ? "已添加（含链接）：「" + name + "」" : "已添加：「" + name + "」");
+}
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (!confirm("确定重置所有勾选状态吗？物品列表会保留，只清空勾选。")) return;
+  data.forEach(g => g.items.forEach(i => i.checked = false));
+  render();
+  showToast("已重置勾选");
+});
+
+// 日期显示
+const now = new Date();
+const week = ["日","一","二","三","四","五","六"][now.getDay()];
+document.getElementById("dateLine").textContent =
+  now.getMonth()+1 + "月" + now.getDate() + "日 星期" + week + " · 出发前检查一下还差什么";
+
+// ================= toast =================
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+render();
+</script>
+</body>
+</html>
