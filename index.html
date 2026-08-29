@@ -107,7 +107,7 @@
   /* ===== 工具条（玻璃） ===== */
   .toolbar {
     position: sticky;
-    top: 135px; /* 由 JS 依据 header 实际高度动态同步 */
+    top: 135px;
     z-index: 9;
     background: var(--glass);
     backdrop-filter: blur(26px) saturate(170%);
@@ -214,7 +214,7 @@
   .category-title .cat-del:hover { color: var(--danger); }
 
   .item {
-    display: flex; align-items: center; gap: 13px;
+    display: flex; flex-direction: column; gap: 10px;
     background: linear-gradient(180deg, rgba(255,255,255,.52), rgba(255,255,255,.24));
     backdrop-filter: blur(26px) saturate(170%);
     -webkit-backdrop-filter: blur(26px) saturate(170%);
@@ -225,6 +225,28 @@
     transition: transform .08s ease, box-shadow .15s ease;
     cursor: pointer; user-select: none;
   }
+  .item-row { display: flex; align-items: center; gap: 13px; }
+  .item-img-wrap { position: relative; width: 100%; }
+  .item-img {
+    width: 100%;
+    border-radius: 12px;
+    display: block;
+  }
+  .img-del {
+    position: absolute; top: 8px; right: 8px;
+    width: 28px; height: 28px;
+    border-radius: 50%; border: none;
+    background: rgba(0,0,0,.45); color: #fff;
+    font-size: 13px; cursor: pointer;
+    backdrop-filter: blur(8px); line-height: 1;
+  }
+  .img-btn {
+    border: 1px solid var(--glass-border-soft); background: rgba(255,255,255,.4);
+    backdrop-filter: blur(14px);
+    border-radius: 10px; font-size: 15px; padding: 5px 8px; cursor: pointer; flex-shrink: 0;
+    line-height: 1;
+  }
+  .img-btn:active { background: rgba(255,255,255,.7); }
   .item:active { transform: scale(.975); }
   .item .box {
     width: 26px; height: 26px; flex-shrink: 0;
@@ -422,10 +444,10 @@
   <div class="hint">图片仅保存在浏览器本地，不上传服务器。</div>
 </div>
 
+<input type="file" id="itemImageFile" accept="image/*" style="display:none" />
 <div class="toast" id="toast"></div>
 
 <script>
-// ================= 预设清单 =================
 const DEFAULT_DATA = [
   { category: "📄 证件资料", items: [
     "身份证", "学生证", "校园卡/一卡通", "银行卡", "证件照（一寸/两寸）",
@@ -461,11 +483,9 @@ const DEFAULT_DATA = [
 
 const STORAGE_KEY = "school-pack-checklist-v1";
 
-// ================= 状态 =================
 let data = loadData();
 let filterOnlyMissing = false;
 
-// ================= 工具 =================
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -476,26 +496,26 @@ function normalizeUrl(u) {
   return u;
 }
 
-// ================= 存储 =================
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed)) {
-        // 迁移兼容旧版本数据
         parsed.forEach(g => {
           if (g.custom === undefined) g.custom = false;
-          g.items.forEach(i => { if (i.link === undefined) i.link = null; });
+          g.items.forEach(i => {
+            if (i.link === undefined) i.link = null;
+            if (i.image === undefined) i.image = null;
+          });
         });
         return parsed;
       }
     }
   } catch (e) {}
-  // 首次使用：生成默认数据
   const d = DEFAULT_DATA.map(g => ({
     category: g.category, custom: false,
-    items: g.items.map(n => ({ name: n, checked: false, link: null }))
+    items: g.items.map(n => ({ name: n, checked: false, link: null, image: null }))
   }));
   saveData(d);
   return d;
@@ -505,7 +525,6 @@ function saveData(d) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 }
 
-// ================= 分类下拉 =================
 function populateSelect() {
   const sel = document.getElementById("addCategory");
   const prev = sel.value;
@@ -519,14 +538,12 @@ function populateSelect() {
   if (prev && data.some(g => g.category === prev)) sel.value = prev;
 }
 
-// ================= 渲染 =================
 function render() {
   const listEl = document.getElementById("list");
   const kw = document.getElementById("searchInput").value.trim().toLowerCase();
   const total = countAll();
   const done = countDone();
 
-  // 进度
   document.getElementById("progressFill").style.width = total === 0 ? "0%" : (done / total * 100) + "%";
   document.getElementById("progressNum").textContent = done + "/" + total + (total - done > 0 ? " · 还有 " + (total - done) + " 件未带" : " · 全部带齐 ✅");
 
@@ -555,13 +572,22 @@ function render() {
     filtered.forEach(it => {
       const key = encodeURIComponent(group.category) + "||" + encodeURIComponent(it.name);
       html += '<div class="item ' + (it.checked ? "checked" : "") + '" data-key="' + key + '">';
+      if (it.image) {
+        html += '<div class="item-img-wrap">';
+        html += '<img class="item-img" src="' + esc(it.image) + '" alt="' + esc(it.name) + '" />';
+        html += '<button class="img-del" data-imgdel="' + key + '" title="删除图片">✕</button>';
+        html += '</div>';
+      }
+      html += '<div class="item-row">';
       html += '<div class="box"><svg viewBox="0 0 24 24"><polyline points="4,12 9,17 20,6"/></svg></div>';
       html += '<div class="name"></div>';
       if (it.link) {
         html += '<button class="link-btn" data-link="' + encodeURIComponent(it.link) + '" title="打开链接">🔗</button>';
       }
+      html += '<button class="img-btn" data-img="' + key + '" title="上传/更换图片">📷</button>';
       html += '<button class="edit" data-edit="' + key + '" title="编辑名称/链接">✎</button>';
       html += '<button class="del" data-del="' + key + '">✕</button>';
+      html += '</div>';
       html += '</div>';
     });
     html += '</div>';
@@ -575,9 +601,8 @@ function render() {
   }
   listEl.innerHTML = html;
 
-  // 填名字（避免 XSS：用 textContent 而非直接拼 html）
   listEl.querySelectorAll(".item .name").forEach(el => {
-    const key = decodeURIComponent(el.parentElement.dataset.key);
+    const key = decodeURIComponent(el.closest(".item").dataset.key);
     const name = key.split("||").pop();
     el.textContent = name;
   });
@@ -585,12 +610,8 @@ function render() {
   saveData();
 }
 
-function countAll() {
-  return data.reduce((s, g) => s + g.items.length, 0);
-}
-function countDone() {
-  return data.reduce((s, g) => s + g.items.filter(i => i.checked).length, 0);
-}
+function countAll() { return data.reduce((s, g) => s + g.items.length, 0); }
+function countDone() { return data.reduce((s, g) => s + g.items.filter(i => i.checked).length, 0); }
 
 function findItem(key) {
   const [cat, name] = key.split("||").map(decodeURIComponent);
@@ -599,9 +620,7 @@ function findItem(key) {
   return group.items.find(i => i.name === name) || null;
 }
 
-// ================= 事件 =================
 document.getElementById("list").addEventListener("click", e => {
-  // 打开物品链接
   const linkBtn = e.target.closest(".link-btn");
   if (linkBtn) {
     e.stopPropagation();
@@ -609,7 +628,24 @@ document.getElementById("list").addEventListener("click", e => {
     window.open(url, "_blank", "noopener");
     return;
   }
-  // 删除整个自定义分类
+  const imgDel = e.target.closest(".img-del");
+  if (imgDel) {
+    e.stopPropagation();
+    const item = findItem(imgDel.dataset.imgdel);
+    if (item) {
+      item.image = null;
+      render();
+      showToast("已删除图片");
+    }
+    return;
+  }
+  const imgBtn = e.target.closest(".img-btn");
+  if (imgBtn) {
+    e.stopPropagation();
+    currentImageKey = imgBtn.dataset.img;
+    document.getElementById("itemImageFile").click();
+    return;
+  }
   const catDel = e.target.closest(".cat-del");
   if (catDel) {
     e.stopPropagation();
@@ -621,14 +657,12 @@ document.getElementById("list").addEventListener("click", e => {
     showToast("已删除分类");
     return;
   }
-  // 编辑物品（名称/链接）
   const editBtn = e.target.closest(".edit");
   if (editBtn) {
     e.stopPropagation();
     editItem(editBtn.dataset.edit);
     return;
   }
-  // 删除物品
   const delBtn = e.target.closest(".del");
   if (delBtn) {
     e.stopPropagation();
@@ -641,7 +675,6 @@ document.getElementById("list").addEventListener("click", e => {
     }
     return;
   }
-  // 勾选
   const itemEl = e.target.closest(".item");
   if (itemEl) {
     const item = findItem(itemEl.dataset.key);
@@ -665,6 +698,45 @@ function editItem(key) {
   render();
   showToast("已更新");
 }
+
+let currentImageKey = null;
+function compressItemImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      const maxW = 720;
+      const scale = Math.min(1, maxW / width);
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+      const c = document.createElement("canvas");
+      c.width = width; c.height = height;
+      c.getContext("2d").drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", 0.72));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("图片加载失败")); };
+    img.src = url;
+  });
+}
+document.getElementById("itemImageFile").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file || !currentImageKey) return;
+  try {
+    const data = await compressItemImage(file);
+    const item = findItem(currentImageKey);
+    if (item) {
+      item.image = data;
+      render();
+      showToast("图片已添加");
+    }
+  } catch (err) {
+    showToast("图片处理失败，请换一张试试");
+  }
+  currentImageKey = null;
+});
 
 document.getElementById("filterBtn").addEventListener("click", () => {
   filterOnlyMissing = !filterOnlyMissing;
@@ -719,7 +791,7 @@ function addItem() {
     showToast("该物品已存在");
     return;
   }
-  group.items.push({ name, checked: false, link });
+  group.items.push({ name, checked: false, link, image: null });
   input.value = "";
   document.getElementById("addLink").value = "";
   document.getElementById("linkRow").style.display = "none";
@@ -735,7 +807,6 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   showToast("已重置勾选");
 });
 
-// ================= 自定义背景 =================
 const BG_KEY = "school-pack-bg-v1";
 const bgEl = document.querySelector(".bg");
 
@@ -766,7 +837,6 @@ function loadBg() {
   } catch (e) {}
 }
 
-// 压缩图片（最大边长 1600px / JPEG 0.82），避免超出 localStorage 容量
 function compressImage(file, maxDim, quality) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -833,13 +903,11 @@ document.getElementById("bgReset").addEventListener("click", () => {
   showToast("已恢复默认渐变");
 });
 
-// 日期显示
 const now = new Date();
 const week = ["日","一","二","三","四","五","六"][now.getDay()];
 document.getElementById("dateLine").textContent =
   now.getMonth()+1 + "月" + now.getDate() + "日 星期" + week + " · 出发前检查一下还差什么";
 
-// 让工具条始终紧贴在头部下方（适配不同屏幕/系统字号）
 function syncToolbar() {
   const h = document.querySelector("header").offsetHeight;
   document.querySelector(".toolbar").style.top = h + "px";
@@ -847,7 +915,6 @@ function syncToolbar() {
 syncToolbar();
 window.addEventListener("resize", syncToolbar);
 
-// ================= toast =================
 let toastTimer = null;
 function showToast(msg) {
   const t = document.getElementById("toast");
