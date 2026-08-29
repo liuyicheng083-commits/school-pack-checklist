@@ -36,6 +36,7 @@
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { -webkit-tap-highlight-color: transparent; }
+  html, body { overflow-x: hidden; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
     color: var(--text);
@@ -43,7 +44,6 @@
     padding-bottom: 176px;
   }
 
-  /* ===== 彩色背景 + 光斑 ===== */
   .bg {
     position: fixed; inset: 0; z-index: -2;
     background:
@@ -76,7 +76,6 @@
     .o3 { background: rgba(120,70,200,.5); }
   }
 
-  /* ===== 顶部（玻璃） ===== */
   header {
     position: sticky; top: 0; z-index: 10;
     padding: 24px 20px 16px;
@@ -104,7 +103,6 @@
   }
   .progress-num { font-size: 14px; font-weight: 700; white-space: nowrap; }
 
-  /* ===== 工具条（玻璃） ===== */
   .toolbar {
     position: sticky;
     top: 135px;
@@ -143,7 +141,6 @@
     box-shadow: 0 6px 18px rgba(110,120,255,.35);
   }
 
-  /* ===== 自定义背景 ===== */
   .bg-btn {
     position: absolute; top: 16px; right: 16px;
     width: 42px; height: 42px; border-radius: 50%;
@@ -191,7 +188,6 @@
   .bg-panel .btn:active { transform: scale(.97); }
   body.has-custom-bg .orb { display: none; }
 
-  /* ===== 清单（液态玻璃卡片） ===== */
   main { padding: 10px 14px 20px; }
   .category { margin-top: 18px; }
   .category-title {
@@ -283,6 +279,7 @@
     line-height: 1;
   }
   .item .link-btn:active { background: rgba(255,255,255,.7); }
+  .item .link-btn.no-link { border-style: dashed; opacity: .75; }
   .item .edit {
     border: none; background: transparent; font-size: 14px; color: var(--text-sub);
     padding: 4px 5px; cursor: pointer; flex-shrink: 0;
@@ -299,14 +296,12 @@
     .item .link-btn { background: rgba(255,255,255,.1); }
   }
 
-  /* ===== 空状态 ===== */
   .empty {
     text-align: center; color: var(--text-sub); font-size: 14px; padding: 56px 20px;
   }
   .empty .big { font-size: 46px; margin-bottom: 12px; }
   .empty .highlight { color: var(--success); font-weight: 800; }
 
-  /* ===== 底部悬浮玻璃 Dock ===== */
   .addbar {
     position: fixed; left: 12px; right: 12px;
     bottom: calc(14px + env(safe-area-inset-bottom));
@@ -384,7 +379,6 @@
   }
   .reset-btn:hover { color: var(--danger); border-color: var(--danger); }
 
-  /* ===== toast ===== */
   .toast {
     position: fixed; left: 50%; bottom: 148px; transform: translateX(-50%) translateY(10px);
     background: rgba(20,22,34,.78); color: #fff; font-size: 13px; font-weight: 500;
@@ -394,6 +388,42 @@
     transition: all .25s ease; pointer-events: none; z-index: 20;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 480px) {
+    header { padding: 18px 14px 12px; }
+    header h1 { font-size: 22px; }
+    header .sub { font-size: 12px; }
+    .progress-row { gap: 8px; margin-top: 10px; }
+    .progress-num { font-size: 12px; }
+    .toolbar { padding: 10px 10px 8px; gap: 8px; }
+    .toolbar .search input { font-size: 14px; padding: 9px 6px; }
+    .toolbar button { font-size: 13px; padding: 0 12px; border-radius: 14px; }
+    main { padding: 8px 10px 16px; }
+    .category { margin-top: 14px; }
+    .category-title { font-size: 14px; margin-bottom: 8px; }
+    .item { gap: 10px; padding: 12px 13px; border-radius: 18px; }
+    .item-row { gap: 8px; }
+    .item-img { max-height: 84px; max-width: 96px; border-radius: 12px; }
+    .item .name { font-size: 14px; }
+    .item .box { width: 24px; height: 24px; border-radius: 8px; }
+    .item .link-btn, .item .img-btn { font-size: 14px; padding: 4px 6px; border-radius: 9px; }
+    .item .edit { font-size: 13px; padding: 3px 4px; }
+    .item .del { font-size: 14px; padding: 3px 5px; }
+    .img-del { width: 20px; height: 20px; font-size: 10px; top: -6px; right: -6px; }
+    .addbar { left: 8px; right: 8px; bottom: calc(10px + env(safe-area-inset-bottom)); padding: 10px; border-radius: 22px; }
+    .addbar-row1 { gap: 6px; }
+    .add-select { max-width: 88px; height: 44px; font-size: 12px; padding: 0 6px; border-radius: 14px; }
+    .newcat-btn { height: 44px; font-size: 12px; padding: 0 8px; border-radius: 14px; }
+    .add-input { height: 44px; font-size: 14px; padding: 0 12px; border-radius: 14px; }
+    .link-toggle { width: 44px; height: 44px; font-size: 16px; border-radius: 14px; }
+    .add-btn { height: 44px; padding: 0 18px; font-size: 15px; border-radius: 14px; }
+    .addbar-row2 { margin-top: 8px; padding: 7px 8px; border-radius: 12px; }
+    .link-input { height: 38px; font-size: 13px; }
+    .addbar-row2 .hint { font-size: 10px; }
+    .reset-btn { margin-top: 20px; font-size: 12px; padding: 9px 20px; }
+    .toast { bottom: 130px; font-size: 12px; padding: 9px 16px; }
+    body { padding-bottom: 160px; }
+  }
 </style>
 </head>
 <body>
@@ -456,7 +486,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ================= 预设清单 =================
 const DEFAULT_DATA = [
   { category: "📄 证件资料", items: [
     "身份证", "学生证", "校园卡/一卡通", "银行卡", "证件照（一寸/两寸）",
@@ -491,12 +520,9 @@ const DEFAULT_DATA = [
 ];
 
 const STORAGE_KEY = "school-pack-checklist-v1";
-
-// ================= 状态 =================
 let data = loadData();
 let filterOnlyMissing = false;
 
-// ================= 工具 =================
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -507,7 +533,6 @@ function normalizeUrl(u) {
   return u;
 }
 
-// ================= 存储 =================
 function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -537,7 +562,6 @@ function saveData(d) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 }
 
-// ================= 分类下拉 =================
 function populateSelect() {
   const sel = document.getElementById("addCategory");
   const prev = sel.value;
@@ -551,7 +575,6 @@ function populateSelect() {
   if (prev && data.some(g => g.category === prev)) sel.value = prev;
 }
 
-// ================= 渲染 =================
 function render() {
   const listEl = document.getElementById("list");
   const kw = document.getElementById("searchInput").value.trim().toLowerCase();
@@ -595,9 +618,10 @@ function render() {
       html += '<div class="item-row">';
       html += '<div class="box"><svg viewBox="0 0 24 24"><polyline points="4,12 9,17 20,6"/></svg></div>';
       html += '<div class="name"></div>';
-      if (it.link) {
-        html += '<button class="link-btn" data-link="' + encodeURIComponent(it.link) + '" title="打开链接">🔗</button>';
-      }
+      html += '<button class="link-btn ' + (it.link ? 'has-link' : 'no-link') + '" ' +
+              (it.link ? 'data-link="' + encodeURIComponent(it.link) + '"' : '') +
+              ' data-key="' + key + '" title="' + (it.link ? '点击打开链接' : '点击添加链接') + '">' +
+              (it.link ? '🔗' : '＋🔗') + '</button>';
       html += '<button class="img-btn" data-img="' + key + '" title="上传/更换图片">📷</button>';
       html += '<button class="edit" data-edit="' + key + '" title="编辑名称/链接">✎</button>';
       html += '<button class="del" data-del="' + key + '">✕</button>';
@@ -624,12 +648,8 @@ function render() {
   saveData();
 }
 
-function countAll() {
-  return data.reduce((s, g) => s + g.items.length, 0);
-}
-function countDone() {
-  return data.reduce((s, g) => s + g.items.filter(i => i.checked).length, 0);
-}
+function countAll() { return data.reduce((s, g) => s + g.items.length, 0); }
+function countDone() { return data.reduce((s, g) => s + g.items.filter(i => i.checked).length, 0); }
 
 function findItem(key) {
   const [cat, name] = key.split("||").map(decodeURIComponent);
@@ -638,24 +658,32 @@ function findItem(key) {
   return group.items.find(i => i.name === name) || null;
 }
 
-// ================= 事件 =================
 document.getElementById("list").addEventListener("click", e => {
   const linkBtn = e.target.closest(".link-btn");
   if (linkBtn) {
     e.stopPropagation();
-    const url = decodeURIComponent(linkBtn.dataset.link);
-    window.open(url, "_blank", "noopener");
+    const url = linkBtn.dataset.link;
+    if (url) {
+      window.open(decodeURIComponent(url), "_blank", "noopener");
+    } else {
+      const key = linkBtn.dataset.key;
+      const item = findItem(key);
+      if (item) {
+        const newLink = prompt("添加物品链接（粘贴淘宝/参考网址，留空取消）：", "");
+        if (newLink !== null && newLink.trim()) {
+          item.link = normalizeUrl(newLink);
+          render();
+          showToast("链接已添加");
+        }
+      }
+    }
     return;
   }
   const imgDel = e.target.closest(".img-del");
   if (imgDel) {
     e.stopPropagation();
     const item = findItem(imgDel.dataset.imgdel);
-    if (item) {
-      item.image = null;
-      render();
-      showToast("已删除图片");
-    }
+    if (item) { item.image = null; render(); showToast("已删除图片"); }
     return;
   }
   const imgBtn = e.target.closest(".img-btn");
@@ -703,10 +731,7 @@ document.getElementById("list").addEventListener("click", e => {
   const itemEl = e.target.closest(".item");
   if (itemEl) {
     const item = findItem(itemEl.dataset.key);
-    if (item) {
-      item.checked = !item.checked;
-      render();
-    }
+    if (item) { item.checked = !item.checked; render(); }
   }
 });
 
@@ -716,7 +741,7 @@ function editItem(key) {
   const newName = prompt("修改物品名称：", item.name);
   if (newName === null) return;
   const name = newName.trim();
-  const newLink = prompt("物品链接（留空表示无链接，点 🔗 可打开）：", item.link || "");
+  const newLink = prompt("物品链接（当前：" + (item.link || "无") + "，可修改；清空后点确定可移除链接）：", item.link || "");
   if (newLink === null) return;
   if (name) item.name = name;
   item.link = normalizeUrl(newLink);
@@ -724,7 +749,6 @@ function editItem(key) {
   showToast("已更新");
 }
 
-// ================= 物品图片 =================
 let currentImageKey = null;
 function compressItemImage(file) {
   return new Promise((resolve, reject) => {
@@ -753,11 +777,7 @@ document.getElementById("itemImageFile").addEventListener("change", async e => {
   try {
     const data = await compressItemImage(file);
     const item = findItem(currentImageKey);
-    if (item) {
-      item.image = data;
-      render();
-      showToast("图片已添加");
-    }
+    if (item) { item.image = data; render(); showToast("图片已添加"); }
   } catch (err) {
     showToast("图片处理失败，请换一张试试");
   }
@@ -770,9 +790,7 @@ document.getElementById("filterBtn").addEventListener("click", () => {
   document.getElementById("filterBtn").textContent = filterOnlyMissing ? "显示全部" : "只显示未带";
   render();
 });
-
 document.getElementById("searchInput").addEventListener("input", render);
-
 document.getElementById("linkToggle").addEventListener("click", () => {
   const row = document.getElementById("linkRow");
   const on = row.style.display !== "flex";
@@ -780,7 +798,6 @@ document.getElementById("linkToggle").addEventListener("click", () => {
   document.getElementById("linkToggle").classList.toggle("active", on);
   if (on) document.getElementById("addLink").focus();
 });
-
 document.getElementById("newCatBtn").addEventListener("click", () => {
   const name = prompt("输入新分类名称（如：零食、杂物、礼物）：");
   if (!name || !name.trim()) return;
@@ -792,14 +809,9 @@ document.getElementById("newCatBtn").addEventListener("click", () => {
   render();
   showToast("已新建分类「" + n + "」");
 });
-
 document.getElementById("addBtn").addEventListener("click", addItem);
-document.getElementById("addInput").addEventListener("keydown", e => {
-  if (e.key === "Enter") addItem();
-});
-document.getElementById("addLink").addEventListener("keydown", e => {
-  if (e.key === "Enter") addItem();
-});
+document.getElementById("addInput").addEventListener("keydown", e => { if (e.key === "Enter") addItem(); });
+document.getElementById("addLink").addEventListener("keydown", e => { if (e.key === "Enter") addItem(); });
 
 function addItem() {
   const input = document.getElementById("addInput");
@@ -807,16 +819,9 @@ function addItem() {
   if (!name) { showToast("请输入物品名称"); return; }
   const cat = document.getElementById("addCategory").value;
   const link = normalizeUrl(document.getElementById("addLink").value);
-
   let group = data.find(g => g.category === cat);
-  if (!group) {
-    group = { category: cat, custom: false, items: [] };
-    data.push(group);
-  }
-  if (group.items.some(i => i.name === name)) {
-    showToast("该物品已存在");
-    return;
-  }
+  if (!group) { group = { category: cat, custom: false, items: [] }; data.push(group); }
+  if (group.items.some(i => i.name === name)) { showToast("该物品已存在"); return; }
   group.items.push({ name, checked: false, link, image: null });
   input.value = "";
   document.getElementById("addLink").value = "";
@@ -833,10 +838,8 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   showToast("已重置勾选");
 });
 
-// ================= 自定义背景 =================
 const BG_KEY = "school-pack-bg-v1";
 const bgEl = document.querySelector(".bg");
-
 function applyBg(bg) {
   if (bg && bg.kind === "image") {
     bgEl.style.backgroundImage = 'url("' + bg.data + '")';
@@ -850,20 +853,13 @@ function applyBg(bg) {
     document.body.classList.remove("has-custom-bg");
   }
 }
-function saveBg(bg) {
-  localStorage.setItem(BG_KEY, JSON.stringify(bg));
-  applyBg(bg);
-}
+function saveBg(bg) { localStorage.setItem(BG_KEY, JSON.stringify(bg)); applyBg(bg); }
 function loadBg() {
   try {
     const raw = localStorage.getItem(BG_KEY);
-    if (raw) {
-      const bg = JSON.parse(raw);
-      if (bg && bg.kind === "image") applyBg(bg);
-    }
+    if (raw) { const bg = JSON.parse(raw); if (bg && bg.kind === "image") applyBg(bg); }
   } catch (e) {}
 }
-
 function compressImage(file, maxDim, quality) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -883,21 +879,14 @@ function compressImage(file, maxDim, quality) {
     img.src = url;
   });
 }
-
 const bgPanel = document.getElementById("bgPanel");
-document.getElementById("bgBtn").addEventListener("click", e => {
-  e.stopPropagation();
-  bgPanel.classList.toggle("hidden");
-});
+document.getElementById("bgBtn").addEventListener("click", e => { e.stopPropagation(); bgPanel.classList.toggle("hidden"); });
 document.addEventListener("click", e => {
-  if (!bgPanel.classList.contains("hidden") &&
-      !e.target.closest("#bgPanel") && !e.target.closest("#bgBtn")) {
+  if (!bgPanel.classList.contains("hidden") && !e.target.closest("#bgPanel") && !e.target.closest("#bgBtn")) {
     bgPanel.classList.add("hidden");
   }
 });
-document.getElementById("bgUploadBtn").addEventListener("click", () => {
-  document.getElementById("bgFile").click();
-});
+document.getElementById("bgUploadBtn").addEventListener("click", () => { document.getElementById("bgFile").click(); });
 document.getElementById("bgFile").addEventListener("change", async e => {
   const file = e.target.files[0];
   e.target.value = "";
@@ -907,17 +896,12 @@ document.getElementById("bgFile").addEventListener("change", async e => {
     saveBg({ kind: "image", data });
     bgPanel.classList.add("hidden");
     showToast("背景已更新");
-  } catch (err) {
-    showToast("图片处理失败，请换一张试试");
-  }
+  } catch (err) { showToast("图片处理失败，请换一张试试"); }
 });
 document.getElementById("bgUrlApply").addEventListener("click", () => {
   const inp = document.getElementById("bgUrl");
   const url = inp.value.trim();
-  if (!/^https?:\/\/[^\s"'<>\\]+$/i.test(url)) {
-    showToast("请输入以 http(s):// 开头的图片链接");
-    return;
-  }
+  if (!/^https?:\/\/[^\s"'<>\\]+$/i.test(url)) { showToast("请输入以 http(s):// 开头的图片链接"); return; }
   saveBg({ kind: "image", data: url });
   inp.value = "";
   bgPanel.classList.add("hidden");
