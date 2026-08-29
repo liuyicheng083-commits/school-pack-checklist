@@ -143,6 +143,54 @@
     box-shadow: 0 6px 18px rgba(110,120,255,.35);
   }
 
+  /* ===== 自定义背景 ===== */
+  .bg-btn {
+    position: absolute; top: 16px; right: 16px;
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 1px solid var(--glass-border-soft);
+    background: var(--glass);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    font-size: 18px; cursor: pointer; line-height: 1;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.5), 0 6px 18px rgba(70,80,160,.14);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .bg-btn:active { transform: scale(.92); }
+  .bg-panel {
+    position: fixed; top: 100px; right: 14px; z-index: 40;
+    width: 268px;
+    background: var(--glass-strong);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: 22px;
+    box-shadow: 0 16px 48px rgba(70,80,160,.25), inset 0 1px 0 rgba(255,255,255,.7);
+    padding: 16px;
+    transition: opacity .18s ease, transform .18s ease;
+  }
+  .bg-panel.hidden { opacity: 0; transform: translateY(-6px) scale(.98); pointer-events: none; }
+  .bg-panel h3 { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+  .bg-panel .hint { font-size: 11px; color: var(--text-sub); margin-top: 8px; line-height: 1.5; }
+  .bg-panel .row { display: flex; gap: 8px; margin-top: 10px; }
+  .bg-panel .row input {
+    flex: 1; min-width: 0; height: 40px; border-radius: 12px;
+    border: 1px solid var(--glass-border-soft); background: rgba(255,255,255,.28);
+    padding: 0 10px; font-size: 13px; color: var(--text); outline: none;
+  }
+  .bg-panel .row input::placeholder { color: var(--text-sub); }
+  @media (prefers-color-scheme: dark) { .bg-panel .row input { background: rgba(255,255,255,.08); } }
+  .bg-panel .btn {
+    height: 40px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--glass-border-soft);
+    background: var(--glass); color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer;
+    backdrop-filter: blur(12px);
+  }
+  .bg-panel .btn.primary {
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    color: #fff; border-color: transparent;
+  }
+  .bg-panel .btn.block { width: 100%; margin-top: 10px; }
+  .bg-panel .btn:active { transform: scale(.97); }
+  body.has-custom-bg .orb { display: none; }
+
   /* ===== 清单（液态玻璃卡片） ===== */
   main { padding: 10px 14px 20px; }
   .category { margin-top: 18px; }
@@ -332,6 +380,7 @@
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-num" id="progressNum">0/0</div>
   </div>
+  <button class="bg-btn" id="bgBtn" title="自定义背景">🎨</button>
 </header>
 
 <div class="toolbar">
@@ -358,6 +407,19 @@
     <input class="link-input" id="addLink" placeholder="粘贴物品链接（如淘宝/参考网址）" />
     <span class="hint">添加后点物品上的 🔗 可直接打开</span>
   </div>
+</div>
+
+<div class="bg-panel hidden" id="bgPanel">
+  <h3>自定义背景</h3>
+  <div class="hint">选一张图片做背景，玻璃卡片会直接透出它。</div>
+  <button class="btn block" id="bgUploadBtn">📁 上传图片</button>
+  <input type="file" id="bgFile" accept="image/*" style="display:none" />
+  <div class="row">
+    <input id="bgUrl" placeholder="或粘贴图片链接…" />
+    <button class="btn primary" id="bgUrlApply">应用</button>
+  </div>
+  <button class="btn block" id="bgReset">恢复默认渐变</button>
+  <div class="hint">图片仅保存在浏览器本地，不上传服务器。</div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -673,6 +735,104 @@ document.getElementById("resetBtn").addEventListener("click", () => {
   showToast("已重置勾选");
 });
 
+// ================= 自定义背景 =================
+const BG_KEY = "school-pack-bg-v1";
+const bgEl = document.querySelector(".bg");
+
+function applyBg(bg) {
+  if (bg && bg.kind === "image") {
+    bgEl.style.backgroundImage = 'url("' + bg.data + '")';
+    bgEl.style.backgroundSize = "cover";
+    bgEl.style.backgroundPosition = "center";
+    document.body.classList.add("has-custom-bg");
+  } else {
+    bgEl.style.backgroundImage = "";
+    bgEl.style.backgroundSize = "";
+    bgEl.style.backgroundPosition = "";
+    document.body.classList.remove("has-custom-bg");
+  }
+}
+function saveBg(bg) {
+  localStorage.setItem(BG_KEY, JSON.stringify(bg));
+  applyBg(bg);
+}
+function loadBg() {
+  try {
+    const raw = localStorage.getItem(BG_KEY);
+    if (raw) {
+      const bg = JSON.parse(raw);
+      if (bg && bg.kind === "image") applyBg(bg);
+    }
+  } catch (e) {}
+}
+
+// 压缩图片（最大边长 1600px / JPEG 0.82），避免超出 localStorage 容量
+function compressImage(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+      const scale = Math.min(1, maxDim / Math.max(width, height));
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+      const c = document.createElement("canvas");
+      c.width = width; c.height = height;
+      c.getContext("2d").drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve(c.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("图片加载失败")); };
+    img.src = url;
+  });
+}
+
+const bgPanel = document.getElementById("bgPanel");
+document.getElementById("bgBtn").addEventListener("click", e => {
+  e.stopPropagation();
+  bgPanel.classList.toggle("hidden");
+});
+document.addEventListener("click", e => {
+  if (!bgPanel.classList.contains("hidden") &&
+      !e.target.closest("#bgPanel") && !e.target.closest("#bgBtn")) {
+    bgPanel.classList.add("hidden");
+  }
+});
+document.getElementById("bgUploadBtn").addEventListener("click", () => {
+  document.getElementById("bgFile").click();
+});
+document.getElementById("bgFile").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  try {
+    const data = await compressImage(file, 1600, 0.82);
+    saveBg({ kind: "image", data });
+    bgPanel.classList.add("hidden");
+    showToast("背景已更新");
+  } catch (err) {
+    showToast("图片处理失败，请换一张试试");
+  }
+});
+document.getElementById("bgUrlApply").addEventListener("click", () => {
+  const inp = document.getElementById("bgUrl");
+  const url = inp.value.trim();
+  if (!/^https?:\/\/[^\s"'<>\\]+$/i.test(url)) {
+    showToast("请输入以 http(s):// 开头的图片链接");
+    return;
+  }
+  saveBg({ kind: "image", data: url });
+  inp.value = "";
+  bgPanel.classList.add("hidden");
+  showToast("背景已更新");
+});
+document.getElementById("bgReset").addEventListener("click", () => {
+  localStorage.removeItem(BG_KEY);
+  applyBg(null);
+  bgPanel.classList.add("hidden");
+  showToast("已恢复默认渐变");
+});
+
 // 日期显示
 const now = new Date();
 const week = ["日","一","二","三","四","五","六"][now.getDay()];
@@ -698,6 +858,7 @@ function showToast(msg) {
 }
 
 render();
+loadBg();
 </script>
 </body>
 </html>
